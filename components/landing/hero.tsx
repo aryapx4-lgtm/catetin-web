@@ -15,21 +15,20 @@ export function Hero() {
       />
 
       <div className="relative mx-auto max-w-[1120px] px-6">
-        <div className="grid items-center gap-12 md:grid-cols-2">
+        <div className="grid items-center gap-12 justify-items-center md:grid-cols-2 md:justify-items-stretch">
           <div className="text-center md:text-left">
             <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-blue-light px-4 py-2 text-xs font-semibold text-green-dark">
               <Zap className="h-4 w-4" aria-hidden="true" />
               Catat keuangan semudah kirim chat
             </div>
 
-            <h1 className="font-display text-[clamp(2rem,5vw,3.2rem)] font-extrabold leading-[1.15] tracking-tight text-text-dark text-balance mx-auto max-w-[48ch] px-4 md:mx-0 md:max-w-none md:px-0">
-              <span className="text-green-dark">Gaji Udah Naik, Tapi Kok </span>
+            <h1 className="font-display text-[clamp(1.6rem,5vw,3.2rem)] font-extrabold leading-[1.15] tracking-tight text-text-dark text-center md:text-left mx-auto md:mx-0 max-w-none px-0">              <span className="text-green-dark">Gaji Udah Naik, Tapi Kok </span>
               <span className="highlight-lime text-green-dark">
                 Tabungan Tetap Kosong?
               </span>
             </h1>
 
-            <p className="mt-5 text-base leading-relaxed text-text-body md:text-lg">
+            <p className="mt-5 text-base leading-relaxed text-text-body md:text-lg px-0">
               Catetin bantu kamu pantau semua keuangan — pengeluaran, pemasukan,
               hutang, sampai investasi — cukup dari{" "}
               <strong className="font-semibold text-text-dark">chat WhatsApp</strong>.
@@ -69,8 +68,8 @@ export function Hero() {
               </p>
             </div>
           </div>
-          <div className="relative flex items-center justify-center">
-            <div className="transform md:scale-180 md:translate-x-25">
+          <div className="relative flex items-center justify-center w-full">
+            <div className="transform mx-auto md:mx-0 md:scale-180 md:translate-x-25">
               <HeroDashboardMock />
             </div>
 

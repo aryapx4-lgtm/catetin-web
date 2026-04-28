@@ -40,6 +40,10 @@ export function CheckoutForm() {
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [phone, setPhone] = useState("")
+  const [password, setPassword] = useState("")
+  const [partnerName, setPartnerName] = useState("")
+  const [partnerEmail, setPartnerEmail] = useState("")
+  const [partnerPhone, setPartnerPhone] = useState("")
   const [agreeTerms, setAgreeTerms] = useState(false)
   const [agreeMarketing, setAgreeMarketing] = useState(false)
   const [isPending, startTransition] = useTransition()
@@ -57,8 +61,25 @@ export function CheckoutForm() {
     () => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email),
     [email],
   )
+  const passwordValid = useMemo(() => password.length >= 8, [password])
+  const partnerPhoneValid = useMemo(
+    () => /^(\+?62|0)8\d{8,12}$/.test(partnerPhone.replace(/\s|-/g, "")),
+    [partnerPhone],
+  )
+  const partnerEmailValid = useMemo(
+    () => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(partnerEmail),
+    [partnerEmail],
+  )
+  const partnerNameValid = useMemo(() => partnerName.trim().length >= 2, [partnerName])
   const canSubmit =
-    name.trim().length >= 2 && emailValid && phoneValid && agreeTerms
+    name.trim().length >= 2 &&
+    emailValid &&
+    phoneValid &&
+    agreeTerms &&
+    passwordValid &&
+    (planId === "couple"
+      ? partnerNameValid && partnerEmailValid && partnerPhoneValid
+      : true)
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -170,7 +191,7 @@ export function CheckoutForm() {
                 id="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Nama sesuai panggilan"
+                placeholder="Nama panjang"
                 autoComplete="name"
                 required
                 className="mt-1.5"
@@ -232,8 +253,78 @@ export function CheckoutForm() {
                 </SelectContent>
               </Select>
             </div>
+            <div className="sm:col-span-2">
+              <Label htmlFor="password">Password akun</Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Minimal 8 karakter"
+                autoComplete="new-password"
+                required
+                className="mt-1.5"
+              />
+              {password && !passwordValid && (
+                <p className="mt-1 text-xs text-destructive">Password minimal 8 karakter.</p>
+              )}
+            </div>
           </div>
         </section>
+
+        {planId === "couple" && (
+          <section className="rounded-2xl border border-border bg-card p-6">
+            <h2 className="text-base font-semibold text-primary">Data pasangan</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Isi data pasangan untuk membuat akun pasangan (opsional jika sudah
+              punya akun).
+            </p>
+            <div className="mt-5 grid gap-4 sm:grid-cols-2">
+              <div className="sm:col-span-2">
+                <Label htmlFor="partner-name">Nama lengkap</Label>
+                <Input
+                  id="partner-name"
+                  value={partnerName}
+                  onChange={(e) => setPartnerName(e.target.value)}
+                  placeholder="Nama lengkap pasangan"
+                  className="mt-1.5"
+                />
+                {partnerName && !partnerNameValid && (
+                  <p className="mt-1 text-xs text-destructive">Nama harus minimal 2 karakter.</p>
+                )}
+              </div>
+              <div>
+                <Label htmlFor="partner-email">Email</Label>
+                <Input
+                  id="partner-email"
+                  type="email"
+                  value={partnerEmail}
+                  onChange={(e) => setPartnerEmail(e.target.value)}
+                  placeholder="email@pasangan.com"
+                  className="mt-1.5"
+                />
+                {partnerEmail && !partnerEmailValid && (
+                  <p className="mt-1 text-xs text-destructive">Format email tidak valid.</p>
+                )}
+              </div>
+              <div>
+                <Label htmlFor="partner-phone">Nomor WhatsApp</Label>
+                <Input
+                  id="partner-phone"
+                  type="tel"
+                  inputMode="tel"
+                  value={partnerPhone}
+                  onChange={(e) => setPartnerPhone(e.target.value)}
+                  placeholder="08xx atau +62xx"
+                  className="mt-1.5"
+                />
+                {partnerPhone && !partnerPhoneValid && (
+                  <p className="mt-1 text-xs text-destructive">Format nomor tidak valid.</p>
+                )}
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Consent */}
         <section className="rounded-2xl border border-border bg-card p-6">

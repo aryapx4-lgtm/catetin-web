@@ -55,31 +55,31 @@ export function Pricing() {
                 const active = duration === d.value
                 return (
                   <button
-                    key={d.value}
-                    type="button"
-                    onClick={() => setDuration(d.value)}
-                    aria-pressed={active}
-                    className={cn(
-                      "inline-flex items-center gap-2 whitespace-nowrap rounded-full px-5 py-3 text-sm font-semibold transition-all",
-                      active
-                        ? "bg-[#A7E666] text-green-dark shadow-[0_2px_12px_rgba(167,230,102,0.3)]"
-                        : "text-white hover:text-white/90",
-                    )}
-                  >
-                    <span>{d.label}</span>
-                    {d.sub && (
-                      <span
-                        className={cn(
-                          "rounded-full px-2 py-0.5 text-[0.7rem] font-bold",
-                          active
-                            ? "bg-green-dark text-[#A7E666]"
-                            : "bg-[rgba(167,230,102,0.15)] text-[#A7E666]",
-                        )}
-                      >
-                        {d.sub}
-                      </span>
-                    )}
-                  </button>
+  key={d.value}
+  type="button"
+  onClick={() => setDuration(d.value)}
+  aria-pressed={active}
+  className={cn(
+    "inline-flex flex-col md:flex-row items-center gap-1 md:gap-2 whitespace-nowrap rounded-full px-4 md:px-5 py-2.5 md:py-3 text-sm font-semibold transition-all",
+    active
+      ? "bg-[#A7E666] text-green-dark shadow-[0_2px_12px_rgba(167,230,102,0.3)]"
+      : "text-white hover:text-white/90",
+  )}
+>
+  <span>{d.label}</span>
+  {d.sub && (
+    <span
+      className={cn(
+        "rounded-full px-2 py-0.5 text-[0.6rem] md:text-[0.7rem] font-bold leading-none",
+        active
+          ? "bg-green-dark text-[#A7E666]"
+          : "bg-[rgba(167,230,102,0.15)] text-[#A7E666]",
+      )}
+    >
+      {d.sub}
+    </span>
+  )}
+</button>
                 )
               })}
             </div>
