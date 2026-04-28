@@ -1,0 +1,236 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* Catetin brand */
+  --green-dark: #154418;
+  --green-deep: #1a5620;
+  --green-light: #e8f8d8;
+  --lime: #a7e666;
+  --orange: #fd8d4e;
+  --orange-deep: #e87a3a;
+  --blue-light: #e4ebfb;
+
+  --text-dark: #0c1f0e;
+  --text-body: #2d4030;
+
+  --background: #ffffff;
+  --foreground: var(--text-dark);
+
+  --card: #ffffff;
+  --card-foreground: var(--text-dark);
+
+  --popover: #ffffff;
+  --popover-foreground: var(--text-dark);
+
+  /* Primary = green-dark */
+  --primary: var(--green-dark);
+  --primary-foreground: #ffffff;
+
+  --secondary: #f8faf8;
+  --secondary-foreground: var(--text-dark);
+
+  --muted: #f0f4f0;
+  --muted-foreground: #4a5e4a;
+
+  /* Accent = orange (CTA) */
+  --accent: var(--orange);
+  --accent-foreground: #ffffff;
+
+  --destructive: #e53e3e;
+  --destructive-foreground: #ffffff;
+
+  --border: #e8eee8;
+  --input: #f0f4f0;
+  --ring: var(--green-dark);
+
+  --chart-1: #154418;
+  --chart-2: #a7e666;
+  --chart-3: #fd8d4e;
+  --chart-4: #4a6ee0;
+  --chart-5: #f5a623;
+
+  --radius: 1.25rem;
+
+  --sidebar: #ffffff;
+  --sidebar-foreground: var(--text-dark);
+  --sidebar-primary: var(--green-dark);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f8faf8;
+  --sidebar-accent-foreground: var(--green-dark);
+  --sidebar-border: #e8eee8;
+  --sidebar-ring: var(--green-dark);
+
+  --shadow-soft: 0 2px 16px rgba(21, 68, 24, 0.08);
+  --shadow-card: 0 4px 24px rgba(21, 68, 24, 0.1);
+  --shadow-elevated: 0 12px 48px rgba(21, 68, 24, 0.14);
+}
+
+@theme inline {
+  --font-sans: var(--font-dm-sans), -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: var(--font-plus-jakarta), var(--font-dm-sans), sans-serif;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  /* Catetin custom tokens */
+  --color-green-dark: var(--green-dark);
+  --color-green-deep: var(--green-deep);
+  --color-green-light: var(--green-light);
+  --color-lime: var(--lime);
+  --color-orange: var(--orange);
+  --color-orange-deep: var(--orange-deep);
+  --color-blue-light: var(--blue-light);
+  --color-text-dark: var(--text-dark);
+  --color-text-body: var(--text-body);
+
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1.25rem;
+  --radius-xl: 1.75rem;
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply bg-background;
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-weight: 400;
+    line-height: 1.65;
+  }
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-display);
+    font-weight: 800;
+    line-height: 1.2;
+    color: var(--text-dark);
+    letter-spacing: -0.01em;
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: var(--font-display);
+  }
+  .shadow-soft {
+    box-shadow: var(--shadow-soft);
+  }
+  .shadow-card-soft {
+    box-shadow: var(--shadow-card);
+  }
+  .shadow-elevated {
+    box-shadow: var(--shadow-elevated);
+  }
+  .shadow-cta {
+    box-shadow: 0 4px 20px rgba(253, 141, 78, 0.35);
+  }
+  .shadow-cta:hover {
+    box-shadow: 0 8px 32px rgba(253, 141, 78, 0.45);
+  }
+}
+
+/* CTA shimmer */
+.cta-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.cta-shimmer::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+  pointer-events: none;
+}
+.cta-shimmer:hover::after {
+  left: 100%;
+}
+
+/* Highlight underline behind keyword */
+.highlight-lime {
+  position: relative;
+  display: inline-block;
+  white-space: nowrap;
+}
+.highlight-lime::after {
+  content: "";
+  position: absolute;
+  bottom: 0.05em;
+  left: 0;
+  width: 100%;
+  height: 0.35em;
+  background: rgba(167, 230, 102, 0.45);
+  z-index: -1;
+  border-radius: 4px;
+}
+
+/* Float badge animation */
+@keyframes float-badge {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+.animate-float {
+  animation: float-badge 3s ease-in-out infinite;
+}
+
+/* Fade up scroll animation */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
