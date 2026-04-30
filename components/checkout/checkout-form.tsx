@@ -29,6 +29,14 @@ import {
 } from "@/lib/plans"
 import { cn } from "@/lib/utils"
 
+type SnapCallbacks = {
+  onSuccess?: (result: unknown) => void
+  onPending?: (result: unknown) => void
+  onError?: (result: unknown) => void
+  onClose?: () => void
+}
+type SnapInstance = { pay: (token: string, callbacks?: SnapCallbacks) => void }
+
 export function CheckoutForm() {
   const router = useRouter()
   const params = useSearchParams()
@@ -58,7 +66,8 @@ export function CheckoutForm() {
     [phone],
   )
   const emailValid = useMemo(
-    () => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email),
+    () =>
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && /@gmail\.com$/i.test(email),
     [email],
   )
   const passwordValid = useMemo(() => password.length >= 8, [password])
@@ -67,7 +76,9 @@ export function CheckoutForm() {
     [partnerPhone],
   )
   const partnerEmailValid = useMemo(
-    () => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(partnerEmail),
+    () =>
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(partnerEmail) &&
+      /@gmail\.com$/i.test(partnerEmail),
     [partnerEmail],
   )
   const partnerNameValid = useMemo(() => partnerName.trim().length >= 2, [partnerName])
@@ -87,11 +98,81 @@ export function CheckoutForm() {
       toast.error("Mohon lengkapi data dengan benar")
       return
     }
-    startTransition(() => {
-      setTimeout(() => {
-        toast.success("Order dibuat. Lanjut ke pembayaran…")
-        router.push(`/checkout/pending?plan=${plan.id}&duration=${duration}`)
-      }, 600)
+    startTransition(async () => {
+      const body: Record<string, unknown> = {
+        planId,
+        duration,
+        owner: {
+          name: name.trim(),
+          email: email.trim().toLowerCase(),
+          phone: phone.trim(),
+          password,
+          consent_marketing: agreeMarketing,
+        },
+      }
+      if (planId === "couple") {
+        body.partner = {
+          name: partnerName.trim(),
+          email: partnerEmail.trim().toLowerCase(),
+          phone: partnerPhone.trim(),
+        }
+      }
+
+      let res: Response
+      try {
+        res = await fetch("/api/checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        })
+      } catch {
+        toast.error("Gagal terhubung ke server. Coba lagi.")
+        return
+      }
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => null)
+        toast.error(err?.error || "Gagal membuat order. Coba lagi.")
+        return
+      }
+
+      const data = (await res.json()) as {
+        bypass?: boolean
+        snap_token?: string
+        order_id?: string
+      }
+
+      if (data.bypass) {
+        toast.success("Order aktif (mode testing). Mengarahkan…")
+        router.push(`/checkout/success?order_id=${data.order_id}`)
+        return
+      }
+
+      if (!data.snap_token) {
+        toast.error("Token pembayaran tidak diterima.")
+        return
+      }
+
+      const snap = (window as unknown as { snap?: SnapInstance }).snap
+      if (!snap) {
+        toast.error("Midtrans Snap belum siap. Refresh halaman dan coba lagi.")
+        return
+      }
+
+      snap.pay(data.snap_token, {
+        onSuccess: () => {
+          router.push(`/checkout/success?order_id=${data.order_id}`)
+        },
+        onPending: () => {
+          router.push(`/checkout/pending?order_id=${data.order_id}`)
+        },
+        onError: () => {
+          toast.error("Pembayaran gagal. Silakan coba lagi.")
+        },
+        onClose: () => {
+          toast.message("Pembayaran dibatalkan.")
+        },
+      })
     })
   }
 
@@ -211,7 +292,7 @@ export function CheckoutForm() {
               />
               {email && !emailValid && (
                 <p className="mt-1 text-xs text-destructive">
-                  Format email tidak valid.
+                  Email harus valid dan menggunakan @gmail.com.
                 </p>
               )}
             </div>
@@ -304,7 +385,9 @@ export function CheckoutForm() {
                   className="mt-1.5"
                 />
                 {partnerEmail && !partnerEmailValid && (
-                  <p className="mt-1 text-xs text-destructive">Format email tidak valid.</p>
+                  <p className="mt-1 text-xs text-destructive">
+                    Email harus valid dan menggunakan @gmail.com.
+                  </p>
                 )}
               </div>
               <div>

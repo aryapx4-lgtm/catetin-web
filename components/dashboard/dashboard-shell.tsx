@@ -2,28 +2,47 @@
 
 import Link from "next/link"
 import { Logo } from "@/components/brand/logo"
-import { usePathname } from "next/navigation"
-import { useState } from "react"
+import { usePathname, useRouter } from "next/navigation"
+import { useState, useTransition } from "react"
 import {
   CreditCard,
   LogOut,
   Menu,
   User,
-  Wallet,
   X,
   MessageCircle,
 } from "lucide-react"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { getSupabaseBrowser } from "@/lib/supabase/client"
 
 const NAV = [
   { href: "/dashboard/profile", label: "Profil", icon: User },
   { href: "/dashboard/billing", label: "Tagihan", icon: CreditCard },
 ]
 
+const WA_BOT_NUMBER = "6285166643014"
+
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
+  const router = useRouter()
   const [open, setOpen] = useState(false)
+  const [isPending, startTransition] = useTransition()
+
+  function handleLogout() {
+    startTransition(async () => {
+      const sb = getSupabaseBrowser()
+      const { error } = await sb.auth.signOut()
+      if (error) {
+        toast.error("Gagal logout: " + error.message)
+        return
+      }
+      toast.success("Berhasil keluar")
+      router.replace("/login")
+      router.refresh()
+    })
+  }
 
   return (
     <div className="min-h-svh bg-secondary/20">
@@ -33,16 +52,25 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           <Logo size={28} />
           <div className="flex items-center gap-2">
             <Button asChild variant="ghost" size="sm" className="hidden md:inline-flex">
-              <a href="https://wa.me/628516664000" target="_blank" rel="noopener noreferrer">
+              <a
+                href={`https://wa.me/${WA_BOT_NUMBER}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 <MessageCircle className="mr-1.5 h-4 w-4" aria-hidden="true" />
                 Chat Bot
               </a>
             </Button>
-            <Button asChild variant="ghost" size="sm" className="hidden md:inline-flex">
-              <Link href="/" className="inline-flex items-center">
-                <LogOut className="mr-1.5 h-4 w-4" aria-hidden="true" />
-                Keluar
-              </Link>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={handleLogout}
+              disabled={isPending}
+              className="hidden md:inline-flex"
+            >
+              <LogOut className="mr-1.5 h-4 w-4" aria-hidden="true" />
+              Keluar
             </Button>
             <button
               type="button"
@@ -79,6 +107,27 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                 </Link>
               )
             })}
+
+            <div className="my-3 h-px bg-border" />
+
+            <a
+              href={`https://wa.me/${WA_BOT_NUMBER}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-foreground/70 transition-colors hover:bg-secondary hover:text-primary"
+            >
+              <MessageCircle className="h-4 w-4" aria-hidden="true" />
+              Chat Bot
+            </a>
+            <button
+              type="button"
+              onClick={handleLogout}
+              disabled={isPending}
+              className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-foreground/70 transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
+            >
+              <LogOut className="h-4 w-4" aria-hidden="true" />
+              Keluar
+            </button>
           </nav>
         </aside>
 
@@ -105,6 +154,28 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                   </Link>
                 )
               })}
+              <a
+                href={`https://wa.me/${WA_BOT_NUMBER}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-foreground/80"
+              >
+                <MessageCircle className="h-4 w-4" aria-hidden="true" />
+                Chat Bot
+              </a>
+              <button
+                type="button"
+                onClick={() => {
+                  setOpen(false)
+                  handleLogout()
+                }}
+                disabled={isPending}
+                className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-destructive"
+              >
+                <LogOut className="h-4 w-4" aria-hidden="true" />
+                Keluar
+              </button>
             </nav>
           </div>
         )}

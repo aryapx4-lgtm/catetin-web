@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 }
 
 export default function CheckoutSuccessPage() {
-  const waNumber = "628516664000" // placeholder
+  const waNumber = "6285166643014" // placeholder
 
   return (
     <>
