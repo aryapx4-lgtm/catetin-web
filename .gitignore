@@ -17,7 +17,6 @@ node_modules
 .vercel
 
 # Docker & deployment
-certbot/
 
 # Bantu deploy
 DEPLOY.md

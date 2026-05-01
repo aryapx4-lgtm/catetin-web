@@ -1,7 +1,7 @@
 #!/bin/bash
 # ============================================================
-# deploy.sh — Script deploy Catetin ke VPS Hostinger
-# Usage: bash deploy.sh [--ssl YOUR_DOMAIN.com YOUR_EMAIL]
+# deploy.sh — Script deploy Catetin ke VPS (via Traefik)
+# Usage: bash deploy.sh
 # ============================================================
 set -euo pipefail
 
@@ -34,52 +34,31 @@ if [ ! -f .env ]; then
     fi
 fi
 
-# ── Step 2: Pull latest code ──────────────────────────────
+# ── Step 2: Check Traefik network ─────────────────────────
+TRAEFIK_NET="${TRAEFIK_NETWORK:-n8n_default}"
+if ! docker network inspect "$TRAEFIK_NET" >/dev/null 2>&1; then
+    warn "Network '$TRAEFIK_NET' belum ada."
+    info "Pastikan n8n + Traefik sudah running dulu, atau buat manual:"
+    info "  docker network create $TRAEFIK_NET"
+    err "Traefik network tidak ditemukan."
+fi
+log "Traefik network '$TRAEFIK_NET' ditemukan."
+
+# ── Step 3: Pull latest code ──────────────────────────────
 info "Pulling latest code..."
 git pull origin main || warn "Git pull gagal, lanjut dengan code lokal..."
 
-# ── Step 3: Build & Deploy ─────────────────────────────────
+# ── Step 4: Build & Deploy ─────────────────────────────────
 info "Building & deploying containers..."
 docker compose down --remove-orphans 2>/dev/null || true
 docker compose up -d --build
 
-log "Containers running!"
+log "Container running!"
 docker compose ps
-
-# ── Step 4: SSL setup (optional) ───────────────────────────
-if [ "${1:-}" = "--ssl" ]; then
-    DOMAIN="${2:?Domain wajib diisi. Usage: deploy.sh --ssl example.com email@example.com}"
-    EMAIL="${3:?Email wajib diisi. Usage: deploy.sh --ssl example.com email@example.com}"
-
-    info "Setting up SSL untuk ${DOMAIN}..."
-
-    # Buat directory certbot
-    mkdir -p certbot/conf certbot/www
-
-    # Request certificate
-    docker compose run --rm certbot certonly \
-        --webroot \
-        --webroot-path=/var/www/certbot \
-        --email "$EMAIL" \
-        --agree-tos \
-        --no-eff-email \
-        -d "$DOMAIN" \
-        -d "www.${DOMAIN}"
-
-    if [ $? -eq 0 ]; then
-        log "SSL certificate berhasil dibuat!"
-        warn "Sekarang update nginx/conf.d/default.conf:"
-        info "1. Ganti YOUR_DOMAIN.com dengan ${DOMAIN}"
-        info "2. Uncomment block HTTPS"
-        info "3. Comment block proxy di HTTP, uncomment redirect 301"
-        info "4. Jalankan: docker compose restart nginx"
-    else
-        err "Gagal membuat SSL certificate."
-    fi
-fi
 
 echo ""
 log "Deploy selesai! 🚀"
-info "App berjalan di port 80 (HTTP)"
+info "App di-route oleh Traefik (port 80/443)"
+info "SSL otomatis via Traefik + Let's Encrypt"
 info "Cek logs: docker compose logs -f app"
 info "Cek status: docker compose ps"
