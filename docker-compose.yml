@@ -4,42 +4,30 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        # Build-time args untuk NEXT_PUBLIC_ variables
         NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
         NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
         NEXT_PUBLIC_MIDTRANS_CLIENT_KEY: ${NEXT_PUBLIC_MIDTRANS_CLIENT_KEY}
-    restart: unless-stopped
     expose:
-      - "3000"
+      - 3000
     env_file:
       - .env
     environment:
       - NODE_ENV=production
     labels:
-      # ── Traefik routing ──
       - traefik.enable=true
-      # HTTP router
-      - traefik.http.routers.catetin.rule=Host(`${APP_DOMAIN:-catetin.co}`)
-      - traefik.http.routers.catetin.entrypoints=web,websecure
+      - traefik.docker.network=n8n_default
+      - traefik.http.routers.catetin-http.rule=Host(`catetin.co`,`www.catetin.co`)
+      - traefik.http.routers.catetin-http.entrypoints=web
+      - traefik.http.routers.catetin-http.middlewares=catetin-https-redirect
+      - traefik.http.middlewares.catetin-https-redirect.redirectscheme.scheme=https
+      - traefik.http.routers.catetin.rule=Host(`catetin.co`,`www.catetin.co`)
+      - traefik.http.routers.catetin.entrypoints=websecure
       - traefik.http.routers.catetin.tls=true
       - traefik.http.routers.catetin.tls.certresolver=mytlschallenge
-      # Service port
       - traefik.http.services.catetin.loadbalancer.server.port=3000
-      # Security headers middleware
-      - traefik.http.middlewares.catetin-headers.headers.SSLRedirect=true
-      - traefik.http.middlewares.catetin-headers.headers.STSSeconds=315360000
-      - traefik.http.middlewares.catetin-headers.headers.browserXSSFilter=true
-      - traefik.http.middlewares.catetin-headers.headers.contentTypeNosniff=true
-      - traefik.http.middlewares.catetin-headers.headers.forceSTSHeader=true
-      - traefik.http.middlewares.catetin-headers.headers.STSIncludeSubdomains=true
-      - traefik.http.middlewares.catetin-headers.headers.STSPreload=true
-      - traefik.http.middlewares.catetin-headers.headers.frameDeny=true
-      # Attach middleware
-      - traefik.http.routers.catetin.middlewares=catetin-headers@docker
+    restart: unless-stopped
     networks:
-      - traefik-public
-
+      - n8n_default
 networks:
-  traefik-public:
+  n8n_default:
     external: true
-    name: ${TRAEFIK_NETWORK:-n8n_default}
