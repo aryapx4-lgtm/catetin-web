@@ -1,0 +1,10 @@
+2026-05-01T09:40:48.464306 Project directory: /opt/catetin
+2026-05-01T09:40:48.464597 Pulling project images
+2026-05-01T09:40:48.465426 ------------------------------
+2026-05-01T09:40:48.555875  app Skipped No image to be pulled
+2026-05-01T09:40:48.560427 ------------------------------
+2026-05-01T09:40:48.560580 Deploying project
+2026-05-01T09:40:48.561337 ------------------------------
+2026-05-01T09:40:48.659413 network traefik-public declared as external, but could not be found
+2026-05-01T09:40:48.663690 ------------------------------
+2026-05-01T09:40:48.663725 Project deployment failed
