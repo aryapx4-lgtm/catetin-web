@@ -1,0 +1,34 @@
+# Dependencies & build cache
+node_modules
+.next
+.pnpm-store
+
+# Version control
+.git
+.gitignore
+
+# Docker files (prevent recursive copy)
+Dockerfile
+docker-compose.yml
+docker-compose.prod.yml
+
+# Environment (secrets should come from docker-compose, not baked in)
+.env
+.env.*
+!.env.example
+
+# IDE & OS
+.vscode
+.idea
+*.swp
+.DS_Store
+Thumbs.db
+
+# Misc
+README.md
+LICENSE
+*.md
+supabase/
+.vercel/
+.snowflake/
+.v0-trash/

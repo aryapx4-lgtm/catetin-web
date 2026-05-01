@@ -15,3 +15,9 @@ node_modules
 .next/
 .DS_Store
 .vercel
+
+# Docker & deployment
+certbot/
+
+# Bantu deploy
+DEPLOY.md

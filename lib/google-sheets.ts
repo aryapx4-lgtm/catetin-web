@@ -51,21 +51,7 @@ export async function createUserSpreadsheet(
   const spreadsheetId = file.data.id
   if (!spreadsheetId) throw new Error("Failed to create spreadsheet")
 
-  if (input.shareEmails.length > 0) {
-    await drive.permissions.create({
-      fileId: spreadsheetId,
-      requestBody: {
-        role: "owner",
-        type: "user",
-        emailAddress: input.shareEmails[0],
-      },
-      transferOwnership: true,
-      fields: "id",
-      supportsAllDrives: true,
-    })
-  }
-
-  for (const email of input.shareEmails.slice(1).filter(Boolean)) {
+  for (const email of input.shareEmails.filter(Boolean)) {
     try {
       await drive.permissions.create({
         fileId: spreadsheetId,
