@@ -2,9 +2,9 @@
 
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
-import { useMemo, useState, useTransition } from "react"
+import { useEffect, useMemo, useState, useTransition } from "react"
 import { toast } from "sonner"
-import { Check, Lock, ShieldCheck } from "lucide-react"
+import { Check, Lock, ShieldCheck, ClipboardCheck, Smartphone, CreditCard, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -181,6 +181,7 @@ export function CheckoutForm() {
       onSubmit={handleSubmit}
       className="grid gap-8 lg:grid-cols-[1fr_380px]"
     >
+      <ProcessingOverlay open={isPending} />
       <div className="space-y-8">
         {/* Plan selection */}
         <section className="rounded-2xl border border-border bg-card p-6">
@@ -542,6 +543,134 @@ function Row({
     <div className="flex items-center justify-between">
       <span className="text-muted-foreground">{label}</span>
       <span>{value}</span>
+    </div>
+  )
+}
+
+const PROCESSING_STEPS = [
+  {
+    icon: ClipboardCheck,
+    title: "Memvalidasi data",
+    desc: "Memeriksa kelengkapan data kamu…",
+  },
+  {
+    icon: Smartphone,
+    title: "Memverifikasi nomor WhatsApp",
+    desc: "Mendeteksi nomor di server WhatsApp (bisa beberapa detik)…",
+  },
+  {
+    icon: CreditCard,
+    title: "Menyiapkan halaman pembayaran",
+    desc: "Membuat sesi pembayaran aman di Midtrans…",
+  },
+] as const
+
+function ProcessingOverlay({ open }: { open: boolean }) {
+  const [step, setStep] = useState(0)
+
+  useEffect(() => {
+    if (!open) {
+      setStep(0)
+      return
+    }
+    // Maju ke step "verifikasi WA" setelah 1.2s, lalu "menyiapkan pembayaran" setelah 4s.
+    // Step terakhir tetap menyala sampai overlay ditutup.
+    const t1 = setTimeout(() => setStep(1), 1200)
+    const t2 = setTimeout(() => setStep(2), 4000)
+    return () => {
+      clearTimeout(t1)
+      clearTimeout(t2)
+    }
+  }, [open])
+
+  if (!open) return null
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Memproses pembayaran"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+    >
+      <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl">
+        <div className="flex flex-col items-center text-center">
+          <div className="relative flex h-16 w-16 items-center justify-center">
+            <span className="absolute inset-0 animate-ping rounded-full bg-accent/30" />
+            <span className="absolute inset-2 rounded-full bg-accent/20" />
+            <Loader2 className="relative h-8 w-8 animate-spin text-accent" />
+          </div>
+          <h3 className="mt-4 text-lg font-bold text-primary">
+            Memproses pembayaran
+          </h3>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Mohon tunggu sebentar dan jangan tutup halaman ini.
+          </p>
+        </div>
+
+        <ul className="mt-6 space-y-3">
+          {PROCESSING_STEPS.map((s, i) => {
+            const status: "done" | "active" | "pending" =
+              i < step ? "done" : i === step ? "active" : "pending"
+            const Icon = s.icon
+            return (
+              <li
+                key={s.title}
+                className={cn(
+                  "flex items-start gap-3 rounded-xl border p-3 transition-all",
+                  status === "active" &&
+                    "border-accent/50 bg-accent/5 ring-1 ring-accent/20",
+                  status === "done" && "border-border bg-secondary/40",
+                  status === "pending" && "border-border bg-background opacity-60",
+                )}
+              >
+                <div
+                  className={cn(
+                    "mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full",
+                    status === "done" && "bg-accent text-accent-foreground",
+                    status === "active" && "bg-accent/15 text-accent",
+                    status === "pending" && "bg-muted text-muted-foreground",
+                  )}
+                  aria-hidden="true"
+                >
+                  {status === "done" ? (
+                    <Check className="h-4 w-4" />
+                  ) : status === "active" ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Icon className="h-4 w-4" />
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div
+                    className={cn(
+                      "text-sm font-semibold",
+                      status === "pending"
+                        ? "text-muted-foreground"
+                        : "text-primary",
+                    )}
+                  >
+                    {s.title}
+                  </div>
+                  <div className="mt-0.5 text-xs text-muted-foreground">
+                    {s.desc}
+                  </div>
+                </div>
+              </li>
+            )
+          })}
+        </ul>
+
+        <div className="mt-5 flex items-start gap-2 rounded-lg bg-secondary/60 p-3 text-xs text-muted-foreground">
+          <ShieldCheck
+            className="mt-0.5 h-4 w-4 shrink-0 text-accent"
+            aria-hidden="true"
+          />
+          <span>
+            Koneksi terenkripsi. Data kamu aman selama proses verifikasi dan
+            pembayaran.
+          </span>
+        </div>
+      </div>
     </div>
   )
 }
