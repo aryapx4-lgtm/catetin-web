@@ -1,58 +1,91 @@
 import { NextResponse } from "next/server"
-import { mayarWebhookSchema } from "@/lib/validators"
 import { verifyMayarWebhookToken, isMayarPaid } from "@/lib/mayar"
 import { getSupabaseAdmin } from "@/lib/supabase/admin"
 import { activateUser } from "@/lib/activate-user"
 
 export const runtime = "nodejs"
 
+/**
+ * Mayar webhook handler — sengaja dibuat lentur karena dokumentasi Mayar bisa
+ * berubah dan field bisa pakai berbagai nama (referenceId / reference_id /
+ * external_id, dst.). Kita log payload mentah supaya kalau ada mismatch
+ * field-name, kelihatan di log.
+ */
 export async function POST(req: Request) {
-  // Mayar dapat mengirim token via X-Callback-Token atau Authorization Bearer.
-  // Kita coba kedua-duanya untuk fleksibilitas.
   const headerToken =
     req.headers.get("x-callback-token") ||
     req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ||
     null
 
+  // Read body sebagai text dulu supaya bisa di-log apa adanya
+  const rawBody = await req.text()
+  console.log("[mayar-webhook] received:", {
+    headers: {
+      "x-callback-token": req.headers.get("x-callback-token") ? "present" : "absent",
+      authorization: req.headers.get("authorization") ? "present" : "absent",
+    },
+    body: rawBody.slice(0, 2000),
+  })
+
   if (!verifyMayarWebhookToken(headerToken)) {
     console.error("[mayar-webhook] invalid or missing token")
-    // Tetap return 200 supaya Mayar tidak retry-bombard,
-    // tapi jangan proses payload-nya.
     return NextResponse.json({ ok: true })
   }
 
-  let body: unknown
+  let body: any
   try {
-    body = await req.json()
+    body = JSON.parse(rawBody)
   } catch {
+    console.error("[mayar-webhook] invalid JSON")
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 })
   }
 
-  const parsed = mayarWebhookSchema.safeParse(body)
-  if (!parsed.success) {
-    console.error("[mayar-webhook] Invalid payload", parsed.error.flatten())
+  // Mayar bisa punya struktur:
+  //   { event, data: { id, referenceId, status, ... } }
+  //   { event, data: { id, reference_id, ... } }
+  //   { event, data: { external_id, ... } }
+  //   atau flat: { event, id, referenceId, status, ... }
+  const data = body.data ?? body
+  const event: string = body.event ?? data.event ?? ""
+  const orderId: string =
+    data.referenceId ||
+    data.reference_id ||
+    data.external_id ||
+    data.externalId ||
+    data.id ||
+    ""
+  const status: string = data.status || event || ""
+  const transactionId: string | null = data.id || data.transactionId || null
+  const paymentType: string | null = data.paymentType || data.payment_type || null
+
+  if (!orderId) {
+    console.error("[mayar-webhook] no orderId/referenceId in payload", body)
     return NextResponse.json({ ok: true })
   }
 
-  const { event, data } = parsed.data
-  const orderId = data.referenceId
+  console.log("[mayar-webhook] parsed:", { event, orderId, status, transactionId })
 
   const sb = getSupabaseAdmin()
-  const isPaid = isMayarPaid({ event, status: data.status })
+  const isPaid = isMayarPaid({ event, status })
 
-  await sb
+  const { error: updateErr } = await sb
     .from("payments")
     .update({
-      provider_status: data.status || event,
-      provider_transaction_id: data.id || null,
-      provider_payment_type: data.paymentType || null,
-      status: isPaid ? "settlement" : data.status || "pending",
+      provider_status: status || event,
+      provider_transaction_id: transactionId,
+      provider_payment_type: paymentType,
+      status: isPaid ? "settlement" : status || "pending",
     })
     .eq("payment_order_id", orderId)
+
+  if (updateErr) {
+    console.error("[mayar-webhook] DB update failed:", updateErr)
+  }
 
   if (isPaid) {
     try {
       await activateUser(orderId)
+      console.log("[mayar-webhook] activated", orderId)
     } catch (err) {
       console.error("[mayar-webhook] activation failed for", orderId, err)
     }
