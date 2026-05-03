@@ -1,10 +1,10 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { Wallet } from "lucide-react"
+import { Logo } from "@/components/brand/logo"
 import { LoginForm } from "@/components/auth/login-form"
 
 export const metadata: Metadata = {
-  title: "Masuk — Finance Bot",
+  title: "Masuk — Catetin.co",
   description: "Masuk dengan nomor WhatsApp untuk akses dashboard kamu.",
 }
 
@@ -12,18 +12,9 @@ export default function LoginPage() {
   return (
     <main className="grid min-h-svh place-items-center bg-secondary/30 px-4 py-12">
       <div className="w-full max-w-md">
-        <Link
-          href="/"
-          className="mb-6 flex items-center justify-center gap-2"
-          aria-label="Beranda"
-        >
-          <span className="grid h-10 w-10 place-items-center rounded-lg bg-primary text-primary-foreground">
-            <Wallet className="h-5 w-5" aria-hidden="true" />
-          </span>
-          <span className="text-lg font-bold tracking-tight text-primary">
-            Finance Bot
-          </span>
-        </Link>
+        <div className="mb-6 flex items-center justify-center gap-2">
+          <Logo />
+        </div>
 
         <div className="rounded-2xl border border-border bg-card p-6 shadow-sm md:p-8">
           <h1 className="text-2xl font-bold tracking-tight text-primary">Masuk</h1>

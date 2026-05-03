@@ -17,7 +17,7 @@ import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { CoupleCard } from "@/components/dashboard/couple-card"
 import { authedFetch } from "@/lib/api-fetch"
-import { getSupabaseBrowser } from "@/lib/supabase/client"
+import { getSafeSession } from "@/lib/supabase/client"
 
 const WA_BOT_NUMBER = "6285166643014"
 
@@ -43,9 +43,8 @@ export default function ProfilePage() {
   useEffect(() => {
     let cancelled = false
     async function load() {
-      const sb = getSupabaseBrowser()
-      const { data: sess } = await sb.auth.getSession()
-      if (!sess.session) {
+      const session = await getSafeSession()
+      if (!session) {
         router.replace("/login")
         return
       }
@@ -109,7 +108,7 @@ export default function ProfilePage() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-xl font-bold tracking-tight">{data.name}</h2>
+                <h2 className="text-xl font-bold tracking-tight text-primary-foreground">{data.name}</h2>
                 {data.groupRole === "owner" ? (
                   <Badge className="bg-white/20 text-white hover:bg-white/30">Owner</Badge>
                 ) : data.groupRole === "member" ? (

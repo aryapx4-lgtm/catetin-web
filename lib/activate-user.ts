@@ -31,7 +31,7 @@ export async function activateUser(orderId: string): Promise<void> {
   const { data: payment, error: payErr } = await sb
     .from("payments")
     .select("*")
-    .eq("midtrans_order_id", orderId)
+    .eq("payment_order_id", orderId)
     .single()
 
   if (payErr || !payment) {
@@ -62,7 +62,7 @@ export async function activateUser(orderId: string): Promise<void> {
       paid_at: payment.paid_at || new Date().toISOString(),
       checkout_data: safeCheckout,
     })
-    .eq("midtrans_order_id", orderId)
+    .eq("payment_order_id", orderId)
 }
 
 async function activateNewUser({

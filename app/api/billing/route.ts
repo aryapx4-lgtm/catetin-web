@@ -43,21 +43,21 @@ export async function GET(req: Request) {
   const { data: rows } = await sb
     .from("payments")
     .select(
-      "midtrans_order_id, plan, amount, status, paid_at, created_at, duration_months, midtrans_payment_type, purpose",
+      "payment_order_id, plan, amount, status, paid_at, created_at, duration_months, provider_payment_type, purpose",
     )
     .eq("phone_number", me.phone_number)
     .order("created_at", { ascending: false })
     .limit(50)
 
   const payments = (rows ?? []).map((r: any) => ({
-    id: r.midtrans_order_id,
+    id: r.payment_order_id,
     plan: r.plan,
     amount: r.amount,
     status: r.status,
     paidAt: r.paid_at,
     createdAt: r.created_at,
     durationMonths: r.duration_months,
-    method: r.midtrans_payment_type ?? null,
+    method: r.provider_payment_type ?? null,
     purpose: r.purpose ?? "new",
   }))
 

@@ -40,16 +40,9 @@ import { Label } from "@/components/ui/label"
 import { Spinner } from "@/components/ui/spinner"
 import { formatRupiah, PLANS, DURATIONS, type Duration, type PlanId } from "@/lib/plans"
 import { authedFetch } from "@/lib/api-fetch"
-import { getSupabaseBrowser } from "@/lib/supabase/client"
+import { getSafeSession } from "@/lib/supabase/client"
+import { openMayarPayment, openCenteredPopup } from "@/lib/mayar-popup"
 import { cn } from "@/lib/utils"
-
-type SnapCallbacks = {
-  onSuccess?: (result: unknown) => void
-  onPending?: (result: unknown) => void
-  onError?: (result: unknown) => void
-  onClose?: () => void
-}
-type SnapInstance = { pay: (token: string, callbacks?: SnapCallbacks) => void }
 
 type Payment = {
   id: string
@@ -90,9 +83,8 @@ export default function BillingPage() {
   useEffect(() => {
     let cancelled = false
     async function load() {
-      const sb = getSupabaseBrowser()
-      const { data: sess } = await sb.auth.getSession()
-      if (!sess.session) {
+      const session = await getSafeSession()
+      if (!session) {
         router.replace("/login")
         return
       }
@@ -129,6 +121,12 @@ export default function BillingPage() {
 
   function handleRenew() {
     if (!data) return
+    // Open popup SYNC sebelum await, supaya gak diblok browser.
+    const popup = openCenteredPopup("mayar-renew")
+    if (!popup) {
+      toast.error("Popup pembayaran diblok. Izinkan popup di browser lalu coba lagi.")
+      return
+    }
     startRenew(async () => {
       const res = await authedFetch("/api/checkout/renew", {
         method: "POST",
@@ -136,39 +134,46 @@ export default function BillingPage() {
         body: JSON.stringify({ duration }),
       })
       if (!res.ok) {
+        try { popup.close() } catch { /* ignore */ }
         const err = await res.json().catch(() => null)
         toast.error(err?.error || "Gagal memulai pembayaran")
         return
       }
       const json = (await res.json()) as {
         bypass?: boolean
-        snap_token?: string
+        payment_url?: string
         order_id?: string
       }
 
       if (json.bypass) {
+        try { popup.close() } catch { /* ignore */ }
         toast.success("Subscription diperpanjang!")
         await refresh()
         return
       }
 
-      const snap = (window as unknown as { snap?: SnapInstance }).snap
-      if (!snap || !json.snap_token) {
-        toast.error("Midtrans Snap belum siap. Refresh halaman lalu coba lagi.")
+      if (!json.payment_url || !json.order_id) {
+        try { popup.close() } catch { /* ignore */ }
+        toast.error("Gagal menyiapkan pembayaran. Coba lagi.")
         return
       }
 
-      snap.pay(json.snap_token, {
-        onSuccess: async () => {
-          toast.success("Pembayaran berhasil. Subscription diperpanjang.")
-          await refresh()
-        },
-        onPending: () => {
-          toast.message("Pembayaran sedang diproses…")
-        },
-        onError: () => toast.error("Pembayaran gagal."),
-        onClose: () => toast.message("Pembayaran dibatalkan."),
+      const result = await openMayarPayment({
+        popup,
+        paymentUrl: json.payment_url,
+        orderId: json.order_id,
       })
+
+      if (result.outcome === "success") {
+        toast.success("Pembayaran berhasil. Subscription diperpanjang.")
+        await refresh()
+      } else if (result.outcome === "pending") {
+        toast.message("Pembayaran sedang diproses…")
+      } else if (result.outcome === "closed") {
+        toast.message("Pembayaran dibatalkan.")
+      } else {
+        toast.error(result.message || "Pembayaran gagal.")
+      }
     })
   }
 
@@ -431,6 +436,11 @@ function UpgradeDialog({
       toast.error("Lengkapi data pasangan dengan benar")
       return
     }
+    const popup = openCenteredPopup("mayar-upgrade")
+    if (!popup) {
+      toast.error("Popup pembayaran diblok. Izinkan popup di browser lalu coba lagi.")
+      return
+    }
     startTransition(async () => {
       const res = await authedFetch("/api/checkout/upgrade", {
         method: "POST",
@@ -446,6 +456,7 @@ function UpgradeDialog({
       })
 
       if (!res.ok) {
+        try { popup.close() } catch { /* ignore */ }
         const err = await res.json().catch(() => null)
         toast.error(err?.error || "Gagal memulai upgrade")
         return
@@ -453,33 +464,41 @@ function UpgradeDialog({
 
       const json = (await res.json()) as {
         bypass?: boolean
-        snap_token?: string
+        payment_url?: string
         order_id?: string
       }
 
       if (json.bypass) {
+        try { popup.close() } catch { /* ignore */ }
         toast.success("Akun di-upgrade ke Couple!")
         onOpenChange(false)
         await onSuccess()
         return
       }
 
-      const snap = (window as unknown as { snap?: SnapInstance }).snap
-      if (!snap || !json.snap_token) {
-        toast.error("Midtrans Snap belum siap. Refresh halaman lalu coba lagi.")
+      if (!json.payment_url || !json.order_id) {
+        try { popup.close() } catch { /* ignore */ }
+        toast.error("Gagal menyiapkan pembayaran. Coba lagi.")
         return
       }
 
-      snap.pay(json.snap_token, {
-        onSuccess: async () => {
-          toast.success("Upgrade berhasil! Pasangan akan menerima email aktivasi.")
-          onOpenChange(false)
-          await onSuccess()
-        },
-        onPending: () => toast.message("Pembayaran sedang diproses…"),
-        onError: () => toast.error("Pembayaran gagal."),
-        onClose: () => toast.message("Pembayaran dibatalkan."),
+      const result = await openMayarPayment({
+        popup,
+        paymentUrl: json.payment_url,
+        orderId: json.order_id,
       })
+
+      if (result.outcome === "success") {
+        toast.success("Upgrade berhasil! Pasangan akan menerima email aktivasi.")
+        onOpenChange(false)
+        await onSuccess()
+      } else if (result.outcome === "pending") {
+        toast.message("Pembayaran sedang diproses…")
+      } else if (result.outcome === "closed") {
+        toast.message("Pembayaran dibatalkan.")
+      } else {
+        toast.error(result.message || "Pembayaran gagal.")
+      }
     })
   }
 

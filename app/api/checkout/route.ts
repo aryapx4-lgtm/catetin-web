@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { checkoutSchema, normalizePhone } from "@/lib/validators"
 import { getSupabaseAdmin } from "@/lib/supabase/admin"
 import { PLANS } from "@/lib/plans"
-import { createSnapToken } from "@/lib/midtrans"
+import { createMayarPayment } from "@/lib/mayar"
 import { activateUser } from "@/lib/activate-user"
 
 export const runtime = "nodejs"
@@ -89,7 +89,7 @@ export async function POST(req: Request) {
     amount,
     status: bypass ? "bypassed" : "pending",
     is_bypassed: bypass,
-    midtrans_order_id: orderId,
+    payment_order_id: orderId,
     duration_months: data.duration,
     checkout_data: checkoutData,
     purpose: "new",
@@ -113,25 +113,28 @@ export async function POST(req: Request) {
     return NextResponse.json({ bypass: true, order_id: orderId })
   }
 
-  let snapToken: string
+  let paymentUrl: string
   try {
-    snapToken = await createSnapToken({
+    const result = await createMayarPayment({
       orderId,
-      grossAmount: amount,
+      amount,
       itemName: `${plan.name} - ${data.duration} bulan`,
+      description: `${plan.name} - ${data.duration} bulan`,
       customer: {
         name: data.owner.name,
         email: data.owner.email,
         phone: ownerPhone,
       },
+      redirectUrl: `${process.env.APP_URL || ""}/dashboard/billing?paid=${orderId}`,
     })
+    paymentUrl = result.paymentUrl
   } catch (err) {
-    console.error("[checkout] Snap token failed:", err)
+    console.error("[checkout] Mayar payment failed:", err)
     return NextResponse.json(
       { error: "Gagal membuat sesi pembayaran", detail: String(err) },
       { status: 502 },
     )
   }
 
-  return NextResponse.json({ snap_token: snapToken, order_id: orderId })
+  return NextResponse.json({ payment_url: paymentUrl, order_id: orderId })
 }

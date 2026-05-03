@@ -39,7 +39,7 @@ export default function TermsPage() {
             </Section>
 
             <Section title="4. Pembayaran">
-              Pembayaran dilakukan via Midtrans (QRIS / transfer bank). Paket
+              Pembayaran dilakukan via Mayar (QRIS / transfer bank). Paket
               berlaku per bulan sesuai pilihan. Refund hanya berlaku jika ada
               kegagalan teknis dari sisi kami.
             </Section>

@@ -45,7 +45,7 @@ export default function PrivacyPage() {
 
             <Section title="4. Pembagian Data">
               Kami TIDAK menjual data pengguna. Data hanya dibagikan ke
-              pihak ketiga seperlunya: Midtrans (untuk pembayaran), Supabase
+              pihak ketiga seperlunya: Mayar (untuk pembayaran), Supabase
               (database), dan Google (spreadsheet).
             </Section>
 

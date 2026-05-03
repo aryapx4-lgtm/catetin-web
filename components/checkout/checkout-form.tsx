@@ -27,15 +27,8 @@ import {
   type Duration,
   type PlanId,
 } from "@/lib/plans"
+import { openMayarPayment, openCenteredPopup } from "@/lib/mayar-popup"
 import { cn } from "@/lib/utils"
-
-type SnapCallbacks = {
-  onSuccess?: (result: unknown) => void
-  onPending?: (result: unknown) => void
-  onError?: (result: unknown) => void
-  onClose?: () => void
-}
-type SnapInstance = { pay: (token: string, callbacks?: SnapCallbacks) => void }
 
 export function CheckoutForm() {
   const router = useRouter()
@@ -55,6 +48,7 @@ export function CheckoutForm() {
   const [agreeTerms, setAgreeTerms] = useState(false)
   const [agreeMarketing, setAgreeMarketing] = useState(false)
   const [isPending, startTransition] = useTransition()
+  const [isFinalizing, setIsFinalizing] = useState(false)
 
   const plan = PLANS[planId]
   const data = plan.durations[duration]
@@ -98,6 +92,12 @@ export function CheckoutForm() {
       toast.error("Mohon lengkapi data dengan benar")
       return
     }
+    // Open popup SYNC dari onClick supaya gak diblok browser.
+    const popup = openCenteredPopup("mayar-checkout")
+    if (!popup) {
+      toast.error("Popup pembayaran diblok. Izinkan popup di browser lalu coba lagi.")
+      return
+    }
     startTransition(async () => {
       const body: Record<string, unknown> = {
         planId,
@@ -126,11 +126,13 @@ export function CheckoutForm() {
           body: JSON.stringify(body),
         })
       } catch {
+        try { popup.close() } catch { /* ignore */ }
         toast.error("Gagal terhubung ke server. Coba lagi.")
         return
       }
 
       if (!res.ok) {
+        try { popup.close() } catch { /* ignore */ }
         const err = await res.json().catch(() => null)
         toast.error(err?.error || "Gagal membuat order. Coba lagi.")
         return
@@ -138,41 +140,43 @@ export function CheckoutForm() {
 
       const data = (await res.json()) as {
         bypass?: boolean
-        snap_token?: string
+        payment_url?: string
         order_id?: string
       }
 
       if (data.bypass) {
-        toast.success("Order aktif (mode testing). Mengarahkan…")
+        try { popup.close() } catch { /* ignore */ }
+        setIsFinalizing(true)
+        await new Promise((r) => setTimeout(r, 5500))
         router.push(`/checkout/success?order_id=${data.order_id}`)
         return
       }
 
-      if (!data.snap_token) {
-        toast.error("Token pembayaran tidak diterima.")
+      if (!data.payment_url || !data.order_id) {
+        try { popup.close() } catch { /* ignore */ }
+        toast.error("Gagal menyiapkan pembayaran. Coba lagi.")
         return
       }
 
-      const snap = (window as unknown as { snap?: SnapInstance }).snap
-      if (!snap) {
-        toast.error("Midtrans Snap belum siap. Refresh halaman dan coba lagi.")
-        return
-      }
-
-      snap.pay(data.snap_token, {
-        onSuccess: () => {
-          router.push(`/checkout/success?order_id=${data.order_id}`)
-        },
-        onPending: () => {
-          router.push(`/checkout/pending?order_id=${data.order_id}`)
-        },
-        onError: () => {
-          toast.error("Pembayaran gagal. Silakan coba lagi.")
-        },
-        onClose: () => {
-          toast.message("Pembayaran dibatalkan.")
-        },
+      const result = await openMayarPayment({
+        popup,
+        paymentUrl: data.payment_url,
+        orderId: data.order_id,
       })
+
+      if (result.outcome === "success") {
+        // Tunjukkan overlay aktivasi SETELAH pembayaran valid (bukan saat popup masih terbuka)
+        // supaya gak overlap. Beri waktu user lihat staged steps sebelum redirect.
+        setIsFinalizing(true)
+        await new Promise((r) => setTimeout(r, 5500))
+        router.push(`/checkout/success?order_id=${data.order_id}`)
+      } else if (result.outcome === "pending") {
+        router.push(`/checkout/pending?order_id=${data.order_id}`)
+      } else if (result.outcome === "closed") {
+        toast.message("Pembayaran dibatalkan.")
+      } else {
+        toast.error(result.message || "Pembayaran gagal. Silakan coba lagi.")
+      }
     })
   }
 
@@ -181,7 +185,7 @@ export function CheckoutForm() {
       onSubmit={handleSubmit}
       className="grid gap-8 lg:grid-cols-[1fr_380px]"
     >
-      <ProcessingOverlay open={isPending} />
+      <ProcessingOverlay open={isFinalizing} />
       <div className="space-y-8">
         {/* Plan selection */}
         <section className="rounded-2xl border border-border bg-card p-6">
@@ -522,7 +526,7 @@ export function CheckoutForm() {
               aria-hidden="true"
             />
             <span>
-              Pembayaran aman diproses oleh Midtrans. Mendukung QRIS, transfer
+              Pembayaran aman diproses oleh Mayar. Mendukung QRIS, transfer
               bank, dan virtual account.
             </span>
           </div>
@@ -549,19 +553,19 @@ function Row({
 
 const PROCESSING_STEPS = [
   {
+    icon: CreditCard,
+    title: "Mengonfirmasi pembayaran",
+    desc: "Memverifikasi transaksi kamu di Mayar…",
+  },
+  {
     icon: ClipboardCheck,
-    title: "Memvalidasi data",
-    desc: "Memeriksa kelengkapan data kamu…",
+    title: "Menyiapkan akun kamu",
+    desc: "Membuat spreadsheet & akun login…",
   },
   {
     icon: Smartphone,
-    title: "Memverifikasi nomor WhatsApp",
-    desc: "Mendeteksi nomor di server WhatsApp (bisa beberapa detik)…",
-  },
-  {
-    icon: CreditCard,
-    title: "Menyiapkan halaman pembayaran",
-    desc: "Membuat sesi pembayaran aman di Midtrans…",
+    title: "Mengaktifkan bot WhatsApp",
+    desc: "Bot akan menghubungi kamu sebentar lagi…",
   },
 ] as const
 
@@ -589,7 +593,7 @@ function ProcessingOverlay({ open }: { open: boolean }) {
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="Memproses pembayaran"
+      aria-label="Mengaktifkan akun"
       className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
     >
       <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl">
@@ -600,7 +604,7 @@ function ProcessingOverlay({ open }: { open: boolean }) {
             <Loader2 className="relative h-8 w-8 animate-spin text-accent" />
           </div>
           <h3 className="mt-4 text-lg font-bold text-primary">
-            Memproses pembayaran
+            Pembayaran berhasil — mengaktifkan akun
           </h3>
           <p className="mt-1 text-sm text-muted-foreground">
             Mohon tunggu sebentar dan jangan tutup halaman ini.

@@ -1,15 +1,9 @@
 import type { Metadata } from "next"
-import Script from "next/script"
 import { Suspense } from "react"
 import { Navbar } from "@/components/landing/navbar"
 import { Footer } from "@/components/landing/footer"
 import { CheckoutForm } from "@/components/checkout/checkout-form"
 import { Spinner } from "@/components/ui/spinner"
-
-const SNAP_URL =
-  process.env.MIDTRANS_IS_PRODUCTION === "true"
-    ? "https://app.midtrans.com/snap/snap.js"
-    : "https://app.sandbox.midtrans.com/snap/snap.js"
 
 export const metadata: Metadata = {
   title: "Checkout — Finance Bot",
@@ -46,11 +40,6 @@ export default function CheckoutPage() {
         </div>
       </main>
       <Footer />
-      <Script
-        src={SNAP_URL}
-        data-client-key={process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY}
-        strategy="afterInteractive"
-      />
     </>
   )
 }

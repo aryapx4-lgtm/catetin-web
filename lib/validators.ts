@@ -49,15 +49,22 @@ export const checkoutSchema = z
 
 export type CheckoutInput = z.infer<typeof checkoutSchema>
 
-export const midtransCallbackSchema = z.object({
-  order_id: z.string(),
-  status_code: z.string(),
-  gross_amount: z.string(),
-  signature_key: z.string(),
-  transaction_status: z.string(),
-  fraud_status: z.string().optional(),
-  payment_type: z.string().optional(),
-  transaction_id: z.string().optional(),
+// Mayar Headless API webhook payload.
+// Schema final disesuaikan dengan payload Mayar real saat testing —
+// asumsi awal mengikuti dokumentasi standar Mayar: event di top-level,
+// detail transaksi di `data.*`. Field yang gak dipakai dibiarkan optional.
+export const mayarWebhookSchema = z.object({
+  event: z.string(),
+  data: z.object({
+    id: z.string(),
+    referenceId: z.string(),
+    status: z.string().optional(),
+    amount: z.number().optional(),
+    customerEmail: z.string().optional(),
+    customerName: z.string().optional(),
+    customerMobile: z.string().optional(),
+    paymentType: z.string().optional(),
+  }),
 })
 
-export type MidtransCallback = z.infer<typeof midtransCallbackSchema>
+export type MayarWebhook = z.infer<typeof mayarWebhookSchema>

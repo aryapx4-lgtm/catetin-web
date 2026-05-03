@@ -31,6 +31,12 @@ export const metadata: Metadata = {
     type: "website",
     locale: "id_ID",
   },
+  twitter: {
+    card: "summary_large_image",
+    title: "Catetin — Catat Keuangan Semudah Kirim Chat",
+    description:
+      "Pantau keuangan kamu cukup lewat WhatsApp. Setup 2 menit, langsung jalan.",
+  },
 }
 
 export const viewport: Viewport = {
