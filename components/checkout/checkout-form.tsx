@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { useEffect, useMemo, useState, useTransition } from "react"
 import { toast } from "sonner"
-import { Check, Lock, ShieldCheck, ClipboardCheck, Smartphone, CreditCard, Loader2 } from "lucide-react"
+import { Check, Lock, ShieldCheck, ClipboardCheck, Smartphone, CreditCard, Loader2, Eye, EyeOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -30,11 +30,17 @@ import {
 import { openMayarPayment, openCenteredPopup } from "@/lib/mayar-popup"
 import { cn } from "@/lib/utils"
 
-export function CheckoutForm() {
+export function CheckoutForm({
+  initialPlan: initialPlanProp,
+  initialDuration: initialDurationProp,
+}: {
+  initialPlan?: PlanId
+  initialDuration?: Duration
+} = {}) {
   const router = useRouter()
   const params = useSearchParams()
-  const initialPlan = getPlan(params.get("plan")).id
-  const initialDuration = getDuration(params.get("duration"))
+  const initialPlan = initialPlanProp ?? getPlan(params.get("plan")).id
+  const initialDuration = initialDurationProp ?? getDuration(params.get("duration"))
 
   const [planId, setPlanId] = useState<PlanId>(initialPlan)
   const [duration, setDuration] = useState<Duration>(initialDuration)
@@ -42,6 +48,7 @@ export function CheckoutForm() {
   const [email, setEmail] = useState("")
   const [phone, setPhone] = useState("")
   const [password, setPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
   const [partnerName, setPartnerName] = useState("")
   const [partnerEmail, setPartnerEmail] = useState("")
   const [partnerPhone, setPartnerPhone] = useState("")
@@ -54,6 +61,15 @@ export function CheckoutForm() {
   const data = plan.durations[duration]
   const total = data.price
   const perSuffix = duration === 1 ? "/bulan" : `/${duration} bulan`
+
+  // Sync URL ke kombinasi plan+duration tanpa trigger navigasi/refetch.
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const target = `/checkout/${planId}/${duration}`
+    if (window.location.pathname !== target) {
+      window.history.replaceState(null, "", target)
+    }
+  }, [planId, duration])
 
   const phoneValid = useMemo(
     () => /^(\+?62|0)8\d{8,12}$/.test(phone.replace(/\s|-/g, "")),
@@ -341,16 +357,32 @@ export function CheckoutForm() {
             </div>
             <div className="sm:col-span-2">
               <Label htmlFor="password">Password akun</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Minimal 8 karakter"
-                autoComplete="new-password"
-                required
-                className="mt-1.5"
-              />
+              <div className="relative mt-1.5">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Minimal 8 karakter"
+                  autoComplete="new-password"
+                  required
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? "Sembunyikan password" : "Tampilkan password"}
+                  aria-pressed={showPassword}
+                  tabIndex={-1}
+                  className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-muted-foreground transition-colors hover:text-primary"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" aria-hidden="true" />
+                  ) : (
+                    <Eye className="h-4 w-4" aria-hidden="true" />
+                  )}
+                </button>
+              </div>
               {password && !passwordValid && (
                 <p className="mt-1 text-xs text-destructive">Password minimal 8 karakter.</p>
               )}
@@ -480,6 +512,17 @@ export function CheckoutForm() {
           <div className="mt-4 space-y-2 text-sm">
             <Row label="Subtotal" value={formatRupiah(data.price)} />
             <Row label="Biaya admin" value="Rp 0" />
+            {duration > 1 && (
+              <Row
+                label={`Per bulan (${duration} bulan)`}
+                value={
+                  <span className="font-semibold text-primary">
+                    {formatRupiah(data.effectivePerMonth)}
+                    <span className="font-normal text-muted-foreground">/bulan</span>
+                  </span>
+                }
+              />
+            )}
             {data.savingsLabel && (
               <Row
                 label="Penghematan"

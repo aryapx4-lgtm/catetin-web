@@ -201,11 +201,11 @@ export default function BillingPage() {
       </header>
 
       {/* Active subscription hero */}
-      <section className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-primary to-primary/85 p-6 text-primary-foreground shadow-sm md:p-8">
+      <section className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-primary to-primary/85 p-5 text-primary-foreground shadow-sm sm:p-6 md:p-8">
         <div className="absolute -right-12 -top-12 h-48 w-48 rounded-full bg-accent/20 blur-3xl" />
-        <div className="relative flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-white/70">
+        <div className="relative flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2 text-xs font-medium uppercase tracking-wider text-white/70">
               Subscription aktif
               <Badge
                 className={cn(
@@ -226,14 +226,14 @@ export default function BillingPage() {
                 )}
               </Badge>
             </div>
-            <div className="mt-2 flex items-baseline gap-2">
-              <span className="text-3xl font-bold tracking-tight">{planMeta.name}</span>
+            <div className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+              <span className="text-2xl font-bold tracking-tight sm:text-3xl">{planMeta.name}</span>
               <span className="text-sm text-white/80">
                 — {formatRupiah(planMeta.durations[1].price)}/bulan
               </span>
             </div>
-            <div className="mt-3 flex items-center gap-2 text-sm text-white/85">
-              <Calendar className="h-4 w-4" aria-hidden="true" />
+            <div className="mt-3 flex items-start gap-2 text-sm text-white/85">
+              <Calendar className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
               <span>
                 Berakhir {endFmt}
                 {status === "active" && daysLeft > 0 ? (
@@ -247,7 +247,7 @@ export default function BillingPage() {
             <Button
               type="button"
               onClick={() => setShowUpgrade(true)}
-              className="bg-white text-primary hover:bg-white/90"
+              className="w-full bg-white text-primary hover:bg-white/90 sm:w-auto"
             >
               <ArrowUpRight className="mr-1.5 h-4 w-4" aria-hidden="true" />
               Upgrade ke Couple
@@ -257,7 +257,7 @@ export default function BillingPage() {
       </section>
 
       {/* Top up / extend section */}
-      <section className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+      <section className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-2">
             <Plus className="h-5 w-5 text-accent" aria-hidden="true" />
@@ -269,7 +269,7 @@ export default function BillingPage() {
           Pilih durasi perpanjangan. Tambahan masa aktif akan disambung dari tanggal berakhir saat ini.
         </p>
 
-        <div className="mt-5 grid gap-3 sm:grid-cols-3">
+        <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
           {DURATIONS.map((d) => {
             const price = planMeta.durations[d.value].price
             const oldPrice = planMeta.durations[d.value].oldPrice
@@ -311,7 +311,7 @@ export default function BillingPage() {
           })}
         </div>
 
-        <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-secondary/40 p-4">
+        <div className="mt-5 flex flex-col gap-3 rounded-xl bg-secondary/40 p-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
           <div>
             <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
               Total
@@ -323,7 +323,7 @@ export default function BillingPage() {
             size="lg"
             onClick={handleRenew}
             disabled={isRenewing}
-            className="bg-accent text-accent-foreground hover:bg-accent/90"
+            className="w-full bg-accent text-accent-foreground hover:bg-accent/90 sm:w-auto"
           >
             {isRenewing ? (
               <>
@@ -341,7 +341,7 @@ export default function BillingPage() {
       </section>
 
       {/* Payment history */}
-      <section className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+      <section className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6">
         <div className="flex items-center gap-2">
           <CreditCard className="h-5 w-5 text-accent" aria-hidden="true" />
           <h2 className="text-base font-semibold text-primary">Riwayat pembayaran</h2>
@@ -356,42 +356,83 @@ export default function BillingPage() {
             </p>
           </div>
         ) : (
-          <div className="-mx-6 mt-4 overflow-x-auto px-6">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Order ID</TableHead>
-                  <TableHead>Plan</TableHead>
-                  <TableHead>Durasi</TableHead>
-                  <TableHead>Tanggal</TableHead>
-                  <TableHead className="text-right">Jumlah</TableHead>
-                  <TableHead className="text-right">Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.payments.map((p) => (
-                  <TableRow key={p.id}>
-                    <TableCell className="font-mono text-xs">{truncateId(p.id)}</TableCell>
-                    <TableCell className="font-semibold capitalize text-primary">
-                      {p.plan}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {p.durationMonths ? `${p.durationMonths} bln` : "-"}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {formatDateTime(p.paidAt || p.createdAt)}
-                    </TableCell>
-                    <TableCell className="text-right font-semibold">
+          <>
+            {/* Mobile: card list */}
+            <ul className="mt-4 space-y-3 md:hidden">
+              {data.payments.map((p) => (
+                <li
+                  key={p.id}
+                  className="rounded-xl border border-border bg-secondary/30 p-4"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="text-sm font-semibold capitalize text-primary">
+                        {p.plan}
+                        {p.durationMonths ? (
+                          <span className="ml-1.5 text-xs font-normal text-muted-foreground">
+                            · {p.durationMonths} bln
+                          </span>
+                        ) : null}
+                      </div>
+                      <div className="mt-0.5 text-xs text-muted-foreground">
+                        {formatDateTime(p.paidAt || p.createdAt)}
+                      </div>
+                      <div className="mt-1 font-mono text-[11px] text-muted-foreground/80">
+                        {truncateId(p.id)}
+                      </div>
+                    </div>
+                    <PaymentStatusBadge status={p.status} />
+                  </div>
+                  <div className="mt-3 flex items-center justify-between border-t border-border/60 pt-3">
+                    <span className="text-xs uppercase tracking-wider text-muted-foreground">
+                      Jumlah
+                    </span>
+                    <span className="text-sm font-semibold text-primary">
                       {formatRupiah(p.amount)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <PaymentStatusBadge status={p.status} />
-                    </TableCell>
+                    </span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+
+            {/* Desktop: table */}
+            <div className="-mx-6 mt-4 hidden overflow-x-auto px-6 md:block">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Order ID</TableHead>
+                    <TableHead>Plan</TableHead>
+                    <TableHead>Durasi</TableHead>
+                    <TableHead>Tanggal</TableHead>
+                    <TableHead className="text-right">Jumlah</TableHead>
+                    <TableHead className="text-right">Status</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                </TableHeader>
+                <TableBody>
+                  {data.payments.map((p) => (
+                    <TableRow key={p.id}>
+                      <TableCell className="font-mono text-xs">{truncateId(p.id)}</TableCell>
+                      <TableCell className="font-semibold capitalize text-primary">
+                        {p.plan}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {p.durationMonths ? `${p.durationMonths} bln` : "-"}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {formatDateTime(p.paidAt || p.createdAt)}
+                      </TableCell>
+                      <TableCell className="text-right font-semibold">
+                        {formatRupiah(p.amount)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <PaymentStatusBadge status={p.status} />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </>
         )}
       </section>
 

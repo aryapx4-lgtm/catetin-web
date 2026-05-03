@@ -172,7 +172,7 @@ function PricingCard({
       </ul>
 
       <Link
-        href={`/checkout?plan=${planId}&duration=${duration}`}
+        href={`/checkout/${planId}/${duration}`}
         className="cta-shimmer inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#FD8D4E] px-6 py-3.5 text-base font-bold text-white shadow-cta transition-all hover:-translate-y-0.5 hover:bg-[#e87a3a]"
       >
         Daftar {formatRupiah(data.price)}

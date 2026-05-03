@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation"
 import { useState, useTransition } from "react"
 import { toast } from "sonner"
+import { Eye, EyeOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -13,6 +14,7 @@ export function LoginForm() {
   const router = useRouter()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
   const [isPending, startTransition] = useTransition()
 
   function handleLogin(e: React.FormEvent<HTMLFormElement>) {
@@ -59,16 +61,32 @@ export function LoginForm() {
 
       <div>
         <Label htmlFor="login-password">Password</Label>
-        <Input
-          id="login-password"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="••••••••"
-          required
-          autoComplete="new-password"
-          className="mt-1.5"
-        />
+        <div className="relative mt-1.5">
+          <Input
+            id="login-password"
+            type={showPassword ? "text" : "password"}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="••••••••"
+            required
+            autoComplete="new-password"
+            className="pr-10"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword((v) => !v)}
+            aria-label={showPassword ? "Sembunyikan password" : "Tampilkan password"}
+            aria-pressed={showPassword}
+            tabIndex={-1}
+            className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-muted-foreground transition-colors hover:text-primary"
+          >
+            {showPassword ? (
+              <EyeOff className="h-4 w-4" aria-hidden="true" />
+            ) : (
+              <Eye className="h-4 w-4" aria-hidden="true" />
+            )}
+          </button>
+        </div>
       </div>
 
       <Button
