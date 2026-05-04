@@ -421,25 +421,48 @@ async function pingUserOnWhatsApp(opts: {
   let text: string
   if (variant === "renew") {
     text =
-      `Halo ${name}! Langganan Finance Bot kamu sudah diperpanjang ✨\n\n` +
-      `Lanjut catat keuangan kamu kapanpun ya 📊`
+      `Halo ${name}! 🎉\n\n` +
+      `Langganan Catetin kamu sudah berhasil diperpanjang! Terima kasih sudah terus percaya sama Catetin. ✨\n\n` +
+      `Langsung lanjut catat keuangan kamu ya — caranya tetap sama:\n\n` +
+      `💬 Ketik langsung, contoh: "Makan siang 35rb"\n` +
+      `📸 Atau kirim foto struk belanja\n` +
+      `📊 Semua otomatis masuk ke spreadsheet kamu\n\n` +
+      `Butuh bantuan? Ketik *"menu"* kapan aja. Semangat kelola keuangannya! 💪`
   } else if (variant === "upgrade") {
     text = isPartner
-      ? `Hai ${name}! Pasangan kamu mengundang kamu ke paket Couple ✨\n\n` +
-        (spreadsheetUrl ? `📊 Spreadsheet bersama:\n${spreadsheetUrl}\n\n` : "") +
-        `Coba kirim foto struk pertama kamu! 📸`
-      : `Halo ${name}! Akun kamu sudah diupgrade ke paket Couple 🎉\n\n` +
-        `Kirim foto struk atau ketik transaksi kamu! 📸`
+      ? `Hai ${name}! 👋\n\n` +
+        `Pasanganmu sudah mengundang kamu ke *Catetin Couple* — sekarang kalian bisa catat keuangan bareng dalam satu spreadsheet! 🎉\n\n` +
+        (spreadsheetUrl ? `📊 *Spreadsheet bersama kalian:*\n${spreadsheetUrl}\n\n` : "") +
+        `Cara pakainya gampang banget:\n` +
+        `💬 Ketik transaksi, contoh: "Belanja bulanan 250rb"\n` +
+        `📸 Foto struk — langsung tercatat otomatis\n` +
+        `Semua transaksi kamu & pasangan tercatat di satu tempat. Yuk mulai kirim transaksi pertamamu! ✨`
+      : `Halo ${name}! 🎉\n\n` +
+        `Akun kamu sudah berhasil diupgrade ke *Catetin Couple*! Sekarang kamu dan pasangan bisa kelola keuangan bareng. 👫\n\n` +
+        `Apa yang bisa kamu lakukan:\n` +
+        `💬 Catat transaksi — ketik langsung, contoh: "Bensin 80rb"\n` +
+        `📸 Foto struk — otomatis dicatat\n` +
+        `📊 Spreadsheet bersama — semua transaksi masuk ke satu tempat\n` +
+        `Yuk langsung catat transaksi pertama! 💪`
   } else {
-    const greeting = isPartner
-      ? `Hai ${name}! Pasangan kamu sudah aktifkan paket Couple ✨`
-      : `Halo ${name}! Akun Finance Bot kamu sudah aktif 🎉`
-    const sheetLine = spreadsheetUrl
-      ? `\n\n📊 Spreadsheet kamu:\n${spreadsheetUrl}`
-      : ""
-    text =
-      `${greeting}${sheetLine}\n\n` +
-      `Coba kirim foto struk pertama kamu, atau ketik transaksi kamu! 📸`
+    text = isPartner
+      ? `Hai ${name}! 👋\n\n` +
+        `Selamat datang di *Catetin*! Pasanganmu sudah mengaktifkan paket Couple — sekarang kalian bisa catat keuangan bareng. 🎉\n\n` +
+        (spreadsheetUrl ? `📊 *Spreadsheet bersama kalian:*\n${spreadsheetUrl}\n\n` : "\n") +
+        `Ini yang bisa kamu lakukan di Catetin:\n` +
+        `💬 *Catat transaksi* — ketik langsung, contoh: "Makan siang 35rb" atau "Gaji masuk 5jt"\n` +
+        `📸 *Foto struk* — kirim foto struk belanja, otomatis tercatat\n` +
+        `📂 *Kategori otomatis* — setiap transaksi otomatis dikategorikan\n\n` +
+        `Yuk coba kirim transaksi pertamamu sekarang! ✨`
+      : `Halo ${name}! 👋\n\n` +
+        `Selamat datang di *Catetin* — asisten keuangan pribadimu lewat WhatsApp! 🎉\n\n` +
+        (spreadsheetUrl ? `📊 *Spreadsheet keuanganmu sudah siap:*\n${spreadsheetUrl}\n\n` : "\n") +
+        `Ini yang bisa kamu lakukan:\n` +
+        `💬 *Catat pengeluaran* — ketik langsung, contoh: "Kopi 25rb" atau "Makan siang 35rb"\n` +
+        `💰 *Catat pemasukan* — contoh: "Gaji masuk 5jt" atau "Freelance 1.5jt"\n` +
+        `📸 *Foto struk* — kirim foto struk belanja, otomatis tercatat\n` +
+        `📂 *Kategori otomatis* — setiap transaksi langsung dikategorikan\n\n` +
+        `Semua tercatat rapi di spreadsheet Google Sheets-mu. Yuk langsung coba kirim transaksi pertamamu! 💪`
   }
 
   await sendActivationMessage(phone, text)
